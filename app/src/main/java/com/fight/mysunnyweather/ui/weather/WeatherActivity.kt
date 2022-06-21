@@ -1,20 +1,25 @@
 package com.fight.mysunnyweather.ui.weather
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProviders
 import com.fight.mysunnyweather.R
+import com.fight.mysunnyweather.SunnyWeatherApplication.Companion.context
 import com.fight.mysunnyweather.login.model.Weather
 import com.fight.mysunnyweather.login.model.getSky
 import kotlinx.android.synthetic.main.activity_weather.*
@@ -32,8 +37,28 @@ class WeatherActivity:AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_weather)
+        navBtn.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
+        drawerLayout.addDrawerListener(object :DrawerLayout.DrawerListener{
+
+            override fun onDrawerStateChanged(newState: Int) {
+
+            }
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+
+            }
+            override fun onDrawerOpened(drawerView: View) {
+
+            }
+            override fun onDrawerClosed(drawerView: View) {
+               val manager = getSystemService(Context.INPUT_METHOD_SERVICE)
+                as InputMethodManager
+                manager.hideSoftInputFromWindow(drawerView.windowToken,
+                InputMethodManager.HIDE_NOT_ALWAYS)
+            }
+        })
         if(viewModel.Locationlng.isEmpty()){
             viewModel.Locationlng = intent.getStringExtra("location_lng")?: ""
         }
@@ -51,8 +76,19 @@ class WeatherActivity:AppCompatActivity() {
                 Toast.makeText(this,"无法成功获取天气信息！",Toast.LENGTH_SHORT).show()
                 result.exceptionOrNull()?.printStackTrace()
             }
+                swipeRefresh.isRefreshing = false
         })
+        swipeRefresh.setColorSchemeResources(R.color.black)
+        /**刷新事件*/
+        refreshWeather()
+        swipeRefresh.setOnRefreshListener {
+            refreshWeather()
+        }
         viewModel.refreshWeather(viewModel.Locationlng,viewModel.Locationlat)
+    }
+    fun refreshWeather(){
+        viewModel.refreshWeather(viewModel.Locationlng,viewModel.Locationlat)   //刷新天气数据
+        swipeRefresh.isRefreshing = true
     }
     private fun showWatherInfo(weather: Weather){
         placeName.text = viewModel.PlaceName
